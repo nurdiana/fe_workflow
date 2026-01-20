@@ -20,7 +20,7 @@ function App() {
       setUsers(data)
       setError('')
     } catch (err) {
-      setError('Failed to fetch users. Make sure backend is running.')
+      setError(`Failed to fetch users: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -59,7 +59,7 @@ function App() {
 
   // Handle delete
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return
+    if (!globalThis.confirm('Are you sure you want to delete this user?')) return
 
     try {
       const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' })
@@ -85,6 +85,50 @@ function App() {
     setError('')
   }
 
+  const renderUserList = () => {
+    if (loading) {
+      return <div className="loading">Loading users...</div>
+    }
+
+    if (users.length === 0) {
+      return <div className="empty">No users found. Add one to get started!</div>
+    }
+
+    return (
+      <div className="table-container">
+        <table className="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(user => (
+              <tr key={user.id}>
+                <td>{user.id}</td>
+                <td>{user.name}</td>
+                <td>{user.email}</td>
+                <td>{user.phone || '-'}</td>
+                <td className="actions-cell">
+                  <button className="btn btn-edit" onClick={() => handleEdit(user)}>
+                    ✏️ Edit
+                  </button>
+                  <button className="btn btn-delete" onClick={() => handleDelete(user.id)}>
+                    🗑️ Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       <header className="header">
@@ -100,56 +144,7 @@ function App() {
       )}
 
       <main className="main">
-        {!showForm ? (
-          <>
-            <div className="actions">
-              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-                + Add New User
-              </button>
-              <button className="btn btn-secondary" onClick={fetchUsers}>
-                ↻ Refresh
-              </button>
-            </div>
-
-            {loading ? (
-              <div className="loading">Loading users...</div>
-            ) : users.length === 0 ? (
-              <div className="empty">No users found. Add one to get started!</div>
-            ) : (
-              <div className="table-container">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Name</th>
-                      <th>Email</th>
-                      <th>Phone</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map(user => (
-                      <tr key={user.id}>
-                        <td>{user.id}</td>
-                        <td>{user.name}</td>
-                        <td>{user.email}</td>
-                        <td>{user.phone || '-'}</td>
-                        <td className="actions-cell">
-                          <button className="btn btn-edit" onClick={() => handleEdit(user)}>
-                            ✏️ Edit
-                          </button>
-                          <button className="btn btn-delete" onClick={() => handleDelete(user.id)}>
-                            🗑️ Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </>
-        ) : (
+        {showForm ? (
           <div className="form-container">
             <h2>{editingUser ? '✏️ Edit User' : '➕ Add New User'}</h2>
             <form onSubmit={handleSubmit}>
@@ -195,6 +190,19 @@ function App() {
               </div>
             </form>
           </div>
+        ) : (
+          <>
+            <div className="actions">
+              <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+                + Add New User
+              </button>
+              <button className="btn btn-secondary" onClick={fetchUsers}>
+                ↻ Refresh
+              </button>
+            </div>
+
+            {renderUserList()}
+          </>
         )}
       </main>
 
